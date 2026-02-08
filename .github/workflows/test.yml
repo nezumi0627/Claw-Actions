@@ -61,7 +61,9 @@ jobs:
             "gateway": {
               "bind": "0.0.0.0",
               "port": 18789,
-              "token": "github-actions-test-token"
+              "auth": {
+                "token": "github-actions-test-token"
+              }
             },
             "skills": []
           }
