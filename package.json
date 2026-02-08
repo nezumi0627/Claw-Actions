@@ -1,0 +1,10 @@
+{
+  "name": "claw-actions",
+  "version": "0.1.0",
+  "description": "OpenClaw and LocalLLM testing on GitHub Actions",
+  "scripts": {
+    "test": "echo \"Ready to run on GitHub Actions\""
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -1,0 +1,100 @@
+name: OpenClaw with LocalLLM Test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  openclaw-test:
+    name: Run OpenClaw and LocalLLM
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install OpenClaw
+        run: |
+          npm install -g openclaw@latest
+          openclaw --version
+
+      - name: Install Ollama (LocalLLM)
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama Service
+        run: |
+          ollama serve &
+          echo "Waiting for Ollama to be ready..."
+          until curl -s http://localhost:11434/api/tags > /dev/null; do
+            sleep 2
+          done
+          echo "Ollama is ready!"
+
+      - name: Pull Lightweight Model (Phi-3)
+        run: |
+          # We use phi3:mini because it's lightweight (2.3GB) and fits well in CI memory (7GB)
+          ollama pull phi3:mini
+
+      - name: Configure OpenClaw
+        run: |
+          mkdir -p ~/.openclaw
+          cat <<EOF > ~/.openclaw/clawdbot.json
+          {
+            "models": {
+              "default": "ollama/phi3:mini",
+              "providers": {
+                "ollama": {
+                  "api": "http://localhost:11434/api"
+                }
+              }
+            },
+            "gateway": {
+              "bind": "0.0.0.0",
+              "port": 18789,
+              "token": "github-actions-test-token"
+            },
+            "skills": []
+          }
+          EOF
+
+      - name: Start OpenClaw Gateway
+        run: |
+          # Run the gateway in the background
+          openclaw gateway run > openclaw-gateway.log 2>&1 &
+
+          echo "Waiting for OpenClaw Gateway to initialize..."
+          # Wait 15 seconds for startup and mDNS etc.
+          sleep 15
+
+          # Check health endpoint
+          if curl -s http://localhost:18789/health | grep -q 'OK'; then
+            echo "SUCCESS: OpenClaw Gateway is running!"
+          else
+            echo "ERROR: OpenClaw Gateway healthy check failed."
+            cat openclaw-gateway.log
+            exit 1
+          fi
+
+      - name: Test AI Response (Optional)
+        run: |
+          echo "Testing AI interaction via gateway..."
+          # Note: OpenClaw usually interacts via agents or skills.
+          # We can check the active models list to verify provider connection.
+          curl -s http://localhost:18789/models || echo "Could not fetch models"
+
+      - name: Upload Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openclaw-logs
+          path: openclaw-gateway.log
