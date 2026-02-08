@@ -48,24 +48,15 @@ jobs:
       - name: Configure OpenClaw
         run: |
           mkdir -p ~/.openclaw
-          cat <<EOF > ~/.openclaw/clawdbot.json
+          cat <<EOF > ~/.openclaw/openclaw.json
           {
-            "models": {
-              "providers": {
-                "ollama": {
-                  "baseUrl": "http://localhost:11434",
-                  "models": ["phi3:mini"]
-                }
-              }
+            "agent": {
+              "model": "ollama/phi3:mini"
             },
             "gateway": {
-              "host": "0.0.0.0",
-              "port": 18789,
-              "auth": {
-                "token": "github-actions-test-token"
-              }
-            },
-            "skills": {}
+              "bind": "127.0.0.1",
+              "port": 18789
+            }
           }
           EOF
 
