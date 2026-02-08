@@ -50,8 +50,12 @@ jobs:
           mkdir -p ~/.openclaw
           cat <<EOF > ~/.openclaw/openclaw.json
           {
-            "agent": {
-              "model": "ollama/phi3:mini"
+            "agents": {
+              "defaults": {
+                "model": {
+                  "primary": "ollama/phi3:mini"
+                }
+              }
             },
             "gateway": {
               "bind": "127.0.0.1",
