@@ -51,21 +51,21 @@ jobs:
           cat <<EOF > ~/.openclaw/clawdbot.json
           {
             "models": {
-              "default": "ollama/phi3:mini",
               "providers": {
                 "ollama": {
-                  "api": "http://localhost:11434/api"
+                  "baseUrl": "http://localhost:11434",
+                  "models": ["phi3:mini"]
                 }
               }
             },
             "gateway": {
-              "bind": "0.0.0.0",
+              "host": "0.0.0.0",
               "port": 18789,
               "auth": {
                 "token": "github-actions-test-token"
               }
             },
-            "skills": []
+            "skills": {}
           }
           EOF
 
